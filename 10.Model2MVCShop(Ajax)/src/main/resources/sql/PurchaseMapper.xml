@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PurchaseMapper">
+ 	
+ 	
+	<resultMap id="purchaseSelectMap" type="purchase" >
+		<result property="tranNo" 				column="TRAN_NO" 		jdbcType="INTEGER"/>
+  		<result property="purchaseProd.prodNo" 	column="PROD_NO" 		jdbcType="INTEGER"/>
+  		<result property="buyer.userId" 		column="BUYER_ID"		jdbcType="VARCHAR"/>
+  		<result property="paymentOption"		column="PAYMENT_OPTION" jdbcType="CHAR"/>
+  		<result property="receiverName" 		column="RECEIVER_NAME" 	jdbcType="VARCHAR"/>
+  		<result property="receiverPhone" 		column="RECEIVER_PHONE" jdbcType="VARCHAR"/>
+  		<result property="dlvyAddr" 			column="DEMAILADDR" 		jdbcType="VARCHAR"/>
+  		<result property="dlvyRequest" 			column="DLVY_REQUEST" 	jdbcType="VARCHAR"/>
+  		<result property="tranCode" 			column="TRAN_STATUS_CODE" 	jdbcType="CHAR"/>
+  		<result property="orderDate" 			column="ORDER_DATA" 		jdbcType="DATE"/>  		 
+  		<result property="dlvyDate" 			column="DLVY_DATE"		jdbcType="DATE"/>
+  	</resultMap>
+  	
+  	 <select  id="findPurchase"  parameterType="purchase"	resultMap="purchaseSelectMap">
+		SELECT tran_no, prod_no, buyer_id, payment_option, receiver_name, receiver_phone, demailaddr
+		, dlvy_request, tran_status_code, order_data, TO_CHAR(dlvy_date,'yyyymmdd') dlvy_date	
+		FROM transaction WHERE tran_no= #{value}
+		ORDER BY tran_no DESC	 
+	 </select>
+	 
+	 <select  id="findPurchase2"  parameterType="purchase"	resultMap="purchaseSelectMap">
+		SELECT tran_no, prod_no, buyer_id, payment_option, receiver_name, receiver_phone, demailaddr
+		, dlvy_request, tran_status_code, order_data, TO_CHAR(dlvy_date,'yyyymmdd') dlvy_date	
+		FROM transaction WHERE prod_no= #{value}
+		ORDER BY prod_no DESC	 
+	 </select>
+	 
+	 <insert 	id="addPurchase"	 parameterType="purchase">
+      INSERT 
+      INTO transaction 
+      VALUES (seq_transaction_tran_no.nextval,#{purchaseProd.prodNo},#{buyer.userId},#{paymentOption:CHAR}
+            ,#{receiverName:VARCHAR},#{receiverPhone:VARCHAR},#{dlvyAddr:VARCHAR}
+            , #{dlvyRequest:VARCHAR}, '0', SYSDATE  ,#{dlvyDate:DATE})
+	</insert>
+	
+	<update	id="updatePurchase"	parameterType="purchase" >
+	   	UPDATE transaction
+	   	<set>
+	   	PAYMENT_OPTION = #{paymentOption:CHAR},
+	   	RECEIVER_NAME 	= #{receiverName:VARCHAR},
+	   	RECEIVER_PHONE = #{receiverPhone:VARCHAR},
+	   	DEMAILADDR = #{dlvyAddr:VARCHAR},
+	   	DLVY_REQUEST =  #{dlvyRequest:VARCHAR},
+	   	DLVY_DATE = #{dlvyDate:DATE}  	
+	   	</set>
+	   	WHERE tran_no = #{tranNo}
+	 </update>
+	 
+	  <update	id="updateTranCode"	parameterType="purchase" >
+	   	UPDATE transaction
+	 	set
+	   	tran_status_code 	= #{tranCode}	   
+	   	WHERE
+	   	<if test="purchaseProd.prodNo==0">
+	   	tran_no = #{tranNo}  	
+	   	</if>
+	   	<if test="purchaseProd.prodNo!=0">
+	   	prod_no = #{purchaseProd.prodNo}
+	   	</if>
+	 </update>
+	 
+	 <select  id="getPurchaseList"  parameterType="map" resultMap="purchaseSelectMap">
+	 SELECT *
+	 FROM ( SELECT inner_table. * ,  ROWNUM AS row_seq
+	 FROM (	SELECT tran_no, prod_no, buyer_id, payment_option, receiver_name, receiver_phone
+	 , demailaddr, dlvy_request, DECODE(tran_status_code,'3  ','판매중','2  ','배송완료','1  ','배송중','0  ','구매완료','4  ','구매확정','판매중') tran_status_code
+	 , order_data, dlvy_date
+	 FROM transaction WHERE buyer_id= #{userId}
+	 ORDER BY tran_no DESC ) inner_table
+	 WHERE ROWNUM &lt;= #{search.endRowNum} ) 
+	 WHERE row_seq BETWEEN #{search.startRowNum} AND #{search.endRowNum}
+	  </select> 
+	  
+	  <select  id="getSaleList"  parameterType="search"	 resultMap="purchaseSelectMap">
+	 SELECT *
+	 FROM ( SELECT inner_table. * ,  ROWNUM AS row_seq
+	 FROM (	SELECT tran_no, prod_no, buyer_id, payment_option, receiver_name, receiver_phone
+	 , demailaddr, dlvy_request, DECODE(tran_status_code,'3  ','판매중','2  ','배송완료','1  ','배송중','0  ','구매완료','4  ','구매확정','판매중') tran_status_code, order_data, dlvy_date
+	  FROM transaction
+	  ORDER BY tran_no DESC ) inner_table
+	 WHERE ROWNUM &lt;= #{endRowNum} ) 
+	 WHERE row_seq BETWEEN #{startRowNum} AND #{endRowNum}
+	   </select>
+	 
+	<select id="saleListCount" resultType="int">
+		SELECT COUNT(*) 
+		FROM (
+		SELECT tran_no, prod_no, buyer_id, payment_option, receiver_name, receiver_phone
+		, demailaddr, dlvy_request, tran_status_code, order_data, dlvy_date
+		FROM transaction		
+		ORDER BY tran_no DESC
+		) countTable
+	   </select>
+	   
+	   <select id="purchaseListCount" resultType="int">
+	   SELECT COUNT(*) 
+		FROM (
+		SELECT tran_no, prod_no, buyer_id, payment_option, receiver_name, receiver_phone
+		, demailaddr, dlvy_request, DECODE(tran_status_code,'3  ','판매중','2  ','배송완료','1  ','배송중','0  ','구매완료','4  ','구매확정','판매중') tran_status_code
+		, order_data, dlvy_date
+		FROM transaction WHERE buyer_id= #{value}
+		ORDER BY tran_no DESC
+		) countTable
+	   </select>
+  			 
+</mapper>

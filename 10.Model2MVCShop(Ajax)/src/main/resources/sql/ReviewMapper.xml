@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ReviewMapper">
+ 	
+ 	
+	<resultMap id="ReviewSelectMap" type="review">
+			<result property="reNo" column="REVIEW_NO" jdbcType="NUMERIC"/>
+			<result property="reprod.prodNo" column="PROD_NO" jdbcType="NUMERIC"/>
+			<result property="reid.userId" column="USER_ID" jdbcType="VARCHAR"/>
+			<result property="score" column="score" jdbcType="NUMERIC"/>
+			<result property="epil" column="EPILOGUE" jdbcType="VARCHAR"/>
+	</resultMap>
+	
+	<!-- SQL : INSERT -->
+			
+	<insert 	id="insertreview"	parameterType="review" >
+	 	INSERT
+		INTO review
+		(review_no,prod_no,user_id,score,EPILOGUE)
+		 VALUES (review_no.nextval , #{reprod.prodNo} , #{reid.userId} ,  #{score} , #{epil})
+	 </insert>
+	 
+	 <select id="getprod" parameterType="review" resultMap="ReviewSelectMap">
+	 SELECT
+	 review_no,prod_no,user_id,score,EPILOGUE
+	 from
+	 review
+	 WHERE prod_no = #{reprod.prodNo}	 
+	 </select>
+	 
+	 <select id="getuser" parameterType="review" resultMap="ReviewSelectMap">
+	 SELECT
+	 review_no,prod_no,user_id,score,EPILOGUE
+	 from
+	 review
+	 WHERE user_id = #{reid.userId}	 
+	 </select>
+	 
+	 <update id="updatereview" parameterType="review">
+	 UPDATE review
+	 set
+	 score = #{score},
+	 EPILOGUE = #{epil}	 
+	  WHERE prod_no = #{reprod.prodNo}
+	 </update>
+	 
+</mapper>
